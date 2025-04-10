@@ -16,7 +16,7 @@ class INode {
 
 
 template <typename KeyT>  // integer
-class InputData : public detail::INode<KeyT> {
+class InputData final: public detail::INode<KeyT> {
    public:
     explicit InputData(const Tensor<KeyT>& tensor) : tensor_(tensor) {}
     Tensor<KeyT> evaluate() const override { return tensor_; }
@@ -29,7 +29,6 @@ class InputData : public detail::INode<KeyT> {
 
 namespace detail {
 
-// Интерфейс операции
 template <typename KeyT>
 class IOperation : public INode<KeyT> {
    public:

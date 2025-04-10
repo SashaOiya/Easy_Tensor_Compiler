@@ -54,7 +54,12 @@ class Matrix final : private std::vector<T> {
 
     ~Matrix() = default;
 
+    //-------------------------------
     constexpr value_type& operator[](size_type row, size_type col) {
+        return data()[row * cols_ + col];
+    }
+
+    constexpr value_type& at(size_type row, size_type col) {
         if (!(row < rows_ && col < cols_)) {
             throw std::invalid_argument("Invalid matrix access");
         }
@@ -62,6 +67,10 @@ class Matrix final : private std::vector<T> {
     }
 
     constexpr const value_type& operator[](size_type row, size_type col) const {
+        return data()[row * cols_ + col];
+    }
+
+    constexpr const value_type& at(size_type row, size_type col) const {
         if (!(row < rows_ && col < cols_)) {
             throw std::invalid_argument("Invalid matrix access");
         }
@@ -86,7 +95,31 @@ class Matrix final : private std::vector<T> {
 };
 
 template <typename T>
-Matrix<T> multiply(Matrix<T>& A, Matrix<T>& rhs) {
+Matrix<T> operator*(Matrix<T>& A, Matrix<T>& rhs) {
+    const std::size_t rhs_cols = rhs.n_cols();
+    const std::size_t rhs_rows = rhs.n_rows();
+    const std::size_t cols = A.n_cols();
+    const std::size_t rows = A.n_rows();
+
+    if (cols != rhs_rows) {
+        throw std::invalid_argument("Invalid matrix size");
+    }
+
+    Matrix<T> mul_matrix(rows, rhs_cols);
+
+    for (std::size_t i = 0; i < rows; ++i) {
+        for (std::size_t j = 0; j < rhs_cols; ++j) {
+            for (std::size_t k = 0; k < cols; ++k) {
+                mul_matrix[i, j] += A[i, k] * rhs[k, j];
+            }
+        }
+    }
+
+    return mul_matrix;
+}
+
+template <typename T>
+Matrix<T> operator*(const Matrix<T>& A,const  Matrix<T>& rhs) {
     const std::size_t rhs_cols = rhs.n_cols();
     const std::size_t rhs_rows = rhs.n_rows();
     const std::size_t cols = A.n_cols();

@@ -1,7 +1,8 @@
 #include <memory>
 
-#include "network.hpp"
 #include "tensor.hpp"
+#include "operations.hpp"
+#include "network.hpp"
 
 using KeyT = double;
 int main() {
@@ -23,7 +24,7 @@ int main() {
     nn.addOp(std::make_shared<ScalarAddOperation<KeyT>>(input_node, weight));
 
     Tensor output = nn.infer();
-    output.dump();  // Печатаем результат
+    output.print();  // Печатаем результат
 
     return 0;
 }

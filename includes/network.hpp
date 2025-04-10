@@ -1,7 +1,8 @@
 #pragma once
 
+#include <memory>
 #include "tensor.hpp"
-#include "operations.hpp"
+#include "detail.hpp"
 
 namespace network {
 

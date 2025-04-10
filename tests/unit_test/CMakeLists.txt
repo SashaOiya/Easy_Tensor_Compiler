@@ -1,4 +1,4 @@
-add_executable(etc_ut matrix.cpp tensor.cpp)
+add_executable(etc_ut matrix.cpp tensor.cpp network.cpp)
 
 target_link_libraries(etc_ut
 PRIVATE

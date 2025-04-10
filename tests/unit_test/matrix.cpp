@@ -59,7 +59,7 @@ TEST(matrix_buffer, multiply) {
     Matrix<double> matrix = {2, 3, {1, 2, 3, 4, 6, 7}};
     Matrix<double> lhs = {3, 2, {3, 5, 7, 1, 2, 3}};
 
-    Matrix<double> mul = multiply<double>(matrix, lhs);
+    Matrix<double> mul = matrix * lhs;
 
     EXPECT_EQ((mul[0, 0]), 23);
     EXPECT_EQ((mul[0, 1]), 16);

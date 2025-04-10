@@ -35,7 +35,7 @@ TEST(tensor, copy_ctor) {
     Tensor<double> tensor = { 1, 2, {Matrix<double>(2,1), Matrix<double>(2,1)} };
     Tensor<double> lhs = tensor;
 
-    EXPECT_TRUE(tensor.capacity() == lhs.capacity());
+    EXPECT_TRUE(tensor.num_elements() == lhs.num_elements());
     const auto batch_ = lhs.batch(), channels_ = lhs.channels(), height_ = lhs.height(), width_ = lhs.width();
     for (size_t n = 0; n < batch_; ++n)
         for (auto c = 0; c < channels_; ++c)
@@ -49,7 +49,7 @@ TEST(tensor, copy_assignment) {
     Tensor<double> lhs = {0, 0};
     lhs = tensor;
 
-    EXPECT_TRUE(tensor.capacity() == lhs.capacity());
+    EXPECT_TRUE(tensor.num_elements() == lhs.num_elements());
     const auto batch_ = lhs.batch(), channels_ = lhs.channels(), height_ = lhs.height(), width_ = lhs.width();
     for (size_t n = 0; n < batch_; ++n)
         for (auto c = 0; c < channels_; ++c)
