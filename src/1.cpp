@@ -68,6 +68,7 @@ class InputData : public INode {
 public:
     explicit InputData(const Tensor& tensor) : tensor_(tensor) {}
     Tensor evaluate() const override { return tensor_; }  // Просто возвращает свой тензор
+    ~InputData() override = default;
 
 private:
     Tensor tensor_;
@@ -87,7 +88,7 @@ protected:
 // Операция сложения
 class ScalarAddOperation : public BinaryOperation {
 public:
-    ScalarAddOperation(std::shared_ptr<INode> lhs, const Tensor& rhs)
+    ScalarAddOperation(std::shared_ptr<InputData> lhs, const Tensor& rhs)
         : BinaryOperation(std::move(lhs), rhs) {}
 
     Tensor evaluate() const override {

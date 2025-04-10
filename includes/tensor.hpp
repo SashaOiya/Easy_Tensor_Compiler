@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <iostream>
@@ -8,6 +9,7 @@
 
 #include "matrix.hpp"
 
+// remove constexpr
 template <typename T>
 class Tensor final {
     std::size_t batch_, channels_, height_, width_;  // Размеры NCHW
@@ -28,20 +30,22 @@ class Tensor final {
           data_(batch_ * channels_, Matrix<T>(height_, width_)) {}
 
     template <typename Iter>
-        requires std::input_iterator<Iter>
+        requires std::input_iterator<Iter>  // forward
     Tensor(size_type batch, size_type channels, Iter begin, Iter end)
-        : batch_(batch), channels_(channels), data_(begin, end) {
-        if (data_.size() != size()) {
+        : batch_(batch), channels_(channels), data_(begin, end) {  // data_() ---
+        if (data_.size() != size()) {                              // std::distance
             throw std::invalid_argument("Mismatch between iterators size and new tensor size");
         }
+        // insert data
+
+        // optionally put next 2 rows after std::any_of
         height_ = data_[0].n_rows();
         width_ = data_[0].n_cols();
 
-        const size_type matrix_size = data_[0].size();
-        for (auto& it : data_) {
-            if (it.size() != matrix_size) {
-                throw std::invalid_argument("Invalid initializer list matrix size");
-            }
+        if (std::ranges::any_of(data_, [size = data_[0].size()](const auto& elem) {
+                return elem.size() != size;
+            })) {
+            throw std::invalid_argument("Invalid initializer list matrix size");
         }
     }
 
@@ -56,10 +60,10 @@ class Tensor final {
           channels_(std::exchange(rhs.channels_, 0)),
           height_(std::exchange(rhs.height_, 0)),
           width_(std::exchange(rhs.width_, 0)),
-          data_ (std::move (rhs.data_)){}
+          data_(std::move(rhs.data_)) {}
 
     Tensor& operator=(Tensor&& rhs) noexcept {
-        data_ = std::move (rhs.data_);
+        data_ = std::move(rhs.data_);
         batch_ = std::exchange(rhs.batch_, 0);
         channels_ = std::exchange(rhs.channels_, 0);
         height_ = std::exchange(rhs.height_, 0);
@@ -71,52 +75,70 @@ class Tensor final {
     ~Tensor() = default;
 
     //--------------------------------
+    // at() throws exceptions, operator[] does not
     constexpr value_type& operator[](size_type n, size_type c) {
+        // invert operands in comparisons
         if (batch_ <= n || channels_ <= c) {
-            throw std::invalid_argument("Tensor access fail");
+            throw std::out_of_range("Tensor access fail");
         }
         return data_[n * channels_ + c];
     }
 
-    constexpr value_type& operator[](size_type n, size_type c) const {
-        if (batch_ <= n || channels_ <= c) {
-            throw std::invalid_argument("Tensor access fail");
+    constexpr const value_type& operator[](size_type n, size_type c) const {
+        if (n >= batch_ || c >= channels_) {
+            throw std::out_of_range("Tensor access fail");
         }
         return data_[n * channels_ + c];
     }
 
     constexpr T& operator[](size_type n, size_type c, size_type h, size_type w) {
         if (batch_ <= n || channels_ <= c || height_ <= h || width_ <= w) {
-            throw std::invalid_argument("Tensor access fail");
+            throw std::out_of_range("Tensor access fail");
         }
         return data_[n * channels_ + c][h, w];
     }
 
-    constexpr T& operator[](size_type n, size_type c, size_type h, size_type w) const {
+    constexpr T& operator()(size_type n, size_type c, size_type h, size_type w) {
         if (batch_ <= n || channels_ <= c || height_ <= h || width_ <= w) {
-            throw std::invalid_argument("Tensor access fail");
+            throw std::out_of_range("Tensor access fail");
+        }
+        return data_[n * channels_ + c][h, w];
+    }
+    constexpr const T& operator()(size_type n, size_type c, size_type h, size_type w) const {
+        if (batch_ <= n || channels_ <= c || height_ <= h || width_ <= w) {
+            throw std::out_of_range("Tensor access fail");
         }
         return data_[n * channels_ + c][h, w];
     }
 
-    int batch() const { return batch_; }
-    int channels() const { return channels_; }
-    int height() const { return height_; }
-    int width() const { return width_; }
+    constexpr const T& operator[](size_type n, size_type c, size_type h, size_type w) const {
+        if (batch_ <= n || channels_ <= c || height_ <= h || width_ <= w) {
+            throw std::out_of_range("Tensor access fail");
+        }
+        return data_[n * channels_ + c][h, w];
+    }
 
-    size_type capacity() const noexcept { return batch_ * channels_ * height_ * width_; }
-    size_type size() const noexcept { return batch_ * channels_; }
+    size_type batch() const noexcept { return batch_; }
+    size_type channels() const noexcept { return channels_; }
+    size_type height() const noexcept { return height_; }
+    size_type width() const noexcept { return width_; }
+
+    // think of another name for capacity()
+    size_type capacity() const noexcept { return size() * height_ * width_; }
+    size_type size() const noexcept { return data_.size(); }
     constexpr auto& data() noexcept { return data_; }
-    constexpr auto& data() const noexcept { return data_; }
+    constexpr const auto& data() const noexcept { return data_; }
 
-    void dump() const {
-        for (int n = 0; n < batch_; ++n) {
+    void dump() const {// print
+        for (size_type n = 0; n < batch_; ++n) {
             std::cout << "Batch " << n << ":\n";
-            for (int c = 0; c < channels_; ++c) {
+            for (size_type c = 0; c < channels_; ++c) {
                 std::cout << " Channel " << c << ":\n";
-                for (int h = 0; h < height_; ++h) {
-                    for (int w = 0; w < width_; ++w) std::cout << (*this)[n, c, h, w] << " ";
-                    std::cout << "\n";
+                for (size_type h = 0; h < height_; ++h) {
+                    for (size_type w = 0; w < width_; ++w) {
+                        std::cout << (*this)(n, c, h, w) << ' ';
+                    }
+                    std::cout << '\n';
                 }
             }
         }

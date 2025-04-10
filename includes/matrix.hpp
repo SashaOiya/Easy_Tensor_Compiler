@@ -30,10 +30,11 @@ class Matrix final : private std::vector<T> {
         : std::vector<T>(n_rows * n_cols), rows_(n_rows), cols_(n_cols) {}
 
     Matrix(size_type n_rows, size_type n_cols, std::initializer_list<value_type> l)
-        : std::vector<T>(l), rows_(n_rows), cols_(n_cols) {
-        if (l.size() != size()) {
+        : rows_(n_rows), cols_(n_cols) {
+        if (l.size() != rows_ * cols_) {
             throw std::invalid_argument("Incorrect initializer list size");
         }
+        this->assign(l);
     }
 
     Matrix(const Matrix&) = default;
@@ -60,11 +61,11 @@ class Matrix final : private std::vector<T> {
         return data()[row * cols_ + col];
     }
 
-    constexpr value_type& operator[](size_type row, size_type col) const {
+    constexpr const value_type& operator[](size_type row, size_type col) const {
         if (!(row < rows_ && col < cols_)) {
             throw std::invalid_argument("Invalid matrix access");
         }
-        return data()[row * cols_ + row];
+        return data()[row * cols_ + col];
     }
 
     //-------------------------------
