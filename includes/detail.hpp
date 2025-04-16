@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+
 #include "tensor.hpp"
 
 namespace detail {
@@ -12,11 +13,10 @@ class INode {
     virtual ~INode() = default;
 };
 
-}; // namespace detail
-
+};  // namespace detail
 
 template <typename KeyT>  // integer
-class InputData final: public detail::INode<KeyT> {
+class InputData final : public detail::INode<KeyT> {
    public:
     explicit InputData(const Tensor<KeyT>& tensor) : tensor_(tensor) {}
     Tensor<KeyT> evaluate() const override { return tensor_; }
@@ -26,14 +26,13 @@ class InputData final: public detail::INode<KeyT> {
     Tensor<KeyT> tensor_;
 };
 
-
 namespace detail {
 
 template <typename KeyT>
 class IOperation : public INode<KeyT> {
    public:
-    virtual void setArgs(const std::vector<InputData<KeyT>*>& args) = 0; 
-    virtual const std::vector<InputData<KeyT>*>& getArgs() const = 0;  
+    virtual void setArgs(const std::vector<InputData<KeyT>*>& args) = 0;
+    virtual const std::vector<InputData<KeyT>*>& getArgs() const = 0;
 };
 
-}; 
+};  // namespace detail
