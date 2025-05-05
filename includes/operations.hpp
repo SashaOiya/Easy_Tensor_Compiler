@@ -4,32 +4,10 @@
 #include <cmath>
 #include <cstddef>
 #include <memory>
+#include <immintrin.h>
 
 #include "detail.hpp"
-
-namespace detail {
-
-template <typename KeyT>
-class BinaryOperation : public IOperation<KeyT> {
-   public:
-    BinaryOperation(std::shared_ptr<InputData<KeyT>> node, const Tensor<KeyT>& width)
-        : node_(std::move(node)), width_(width) {}
-
-   protected:
-    std::shared_ptr<InputData<KeyT>> node_;  // Входной узел
-    Tensor<KeyT> width_;                     // Константный вес
-};
-
-template <typename KeyT>
-class UnaryOperation : public IOperation<KeyT> {
-   public:
-    explicit UnaryOperation(const std::shared_ptr<InputData<KeyT>>& arg) : arg_(arg) {}
-
-   protected:
-    std::shared_ptr<InputData<KeyT>> arg_;
-};
-
-};  // namespace detail
+#include "matmul.hpp"
 
 template <typename KeyT>
 class ScalarAddOperation : public detail::BinaryOperation<KeyT> {
@@ -46,7 +24,7 @@ class ScalarAddOperation : public detail::BinaryOperation<KeyT> {
 
         assert(left.batch() == width_.batch() && left.channels() == width_.channels() &&
                left.height() == width_.height() && left.width() == width_.width());
-
+        
         Tensor<KeyT> result(left.batch(), left.channels(), left.height(), left.width());
         for (size_type n = 0; n < left.batch(); ++n)  // std::size_t
             for (size_type c = 0; c < left.channels(); ++c)
@@ -140,44 +118,6 @@ class ScalarMulOperation : public detail::BinaryOperation<KeyT> {
 };
 
 template <typename KeyT>
-class MatMulOperation : public detail::BinaryOperation<KeyT> {
-    using detail::BinaryOperation<KeyT>::node_;
-    using detail::BinaryOperation<KeyT>::width_;
-
-   public:
-    MatMulOperation(std::shared_ptr<InputData<KeyT>> lhs, const Tensor<KeyT>& rhs)
-        : detail::BinaryOperation<KeyT>(std::move(lhs), rhs) {}
-
-    Tensor<KeyT> evaluate() const override {
-        const Tensor<KeyT>& lhs_tensor = node_->evaluate();
-        const Tensor<KeyT>& rhs_tensor = width_;
-
-        if (lhs_tensor.num_elements() != rhs_tensor.num_elements()) {
-            throw std::invalid_argument("Tensor size mismatch in MatMulOperation");
-        }
-
-        Tensor<KeyT> result(lhs_tensor.batch(), lhs_tensor.channels(), lhs_tensor.height(),
-                            rhs_tensor.width());
-
-        for (std::size_t i = 0; i < lhs_tensor.num_matrices(); ++i) {
-            result.data()[i] = lhs_tensor.data()[i] * rhs_tensor.data()[i];
-        }
-
-        return result;
-    }
-
-    void setArgs(const std::vector<InputData<KeyT>*>& args) override {
-        if (!args.empty()) node_.reset(args[0]);
-    }
-
-    const std::vector<InputData<KeyT>*>& getArgs() const override {
-        static std::vector<InputData<KeyT>*> args;
-        args = {node_.get()};
-        return args;
-    }
-};
-
-template <typename KeyT>
 class ConvolOperation : public detail::BinaryOperation<KeyT> {
    public:
     using TensorT = Tensor<KeyT>;
@@ -186,7 +126,7 @@ class ConvolOperation : public detail::BinaryOperation<KeyT> {
 
     ConvolOperation(std::shared_ptr<InputData<KeyT>> lhs, const Tensor<KeyT>& rhs)
         : detail::BinaryOperation<KeyT>(std::move(lhs), rhs) {}
-    
+
     TensorT evaluate() const override {
         const TensorT& input_tensor = node_->evaluate();
         const TensorT& kernel_tensor = width_;
@@ -241,8 +181,7 @@ class ReLUOperation : public detail::UnaryOperation<T> {
     using detail::UnaryOperation<T>::arg_;
 
    public:
-   ReLUOperation(std::shared_ptr<InputData<T>> lhs)
-   : detail::UnaryOperation<T>(std::move(lhs)) {}
+    ReLUOperation(std::shared_ptr<InputData<T>> lhs) : detail::UnaryOperation<T>(std::move(lhs)) {}
 
     Tensor<T> evaluate() const override {
         Tensor<T> input_tensor = arg_->evaluate();
@@ -276,8 +215,8 @@ class SoftmaxOperation : public detail::UnaryOperation<T> {
     using detail::UnaryOperation<T>::arg_;
 
    public:
-   SoftmaxOperation(std::shared_ptr<InputData<T>> lhs)
-   : detail::UnaryOperation<T>(std::move(lhs)) {}
+    SoftmaxOperation(std::shared_ptr<InputData<T>> lhs)
+        : detail::UnaryOperation<T>(std::move(lhs)) {}
 
     Tensor<T> evaluate() const override {
         Tensor<T> input_tensor = arg_->evaluate();

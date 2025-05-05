@@ -22,3 +22,10 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=./third_party/c
 cd build/
 make
 ```
+
+## Benchmark :
+Чтобы запустить бенчмарки, перейдите в папку "build" и напишите :
+```sh
+./benchmark/matmul_benchmark
+```
+

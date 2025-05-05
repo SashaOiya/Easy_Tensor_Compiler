@@ -53,13 +53,13 @@ TEST(network, ScalarMulOperation) {
     EXPECT_EQ((output[0, 0, 1, 1]), 160);
 }
 
-TEST(network, MatMulOperation) {
+TEST(network, Naive_MatMulOperation) {
     Tensor<KeyT> input(1, 1, {Matrix<KeyT>(2, 2, {1, 2, 3, 4})});
     Tensor<KeyT> weight(1, 1, {Matrix<KeyT>(2, 2, {5, 6, 7, 8})});
 
     auto input_node = std::make_shared<InputData<KeyT>>(input);
     network::NeuralNetwork<KeyT> nn;
-    nn.addOp(std::make_shared<MatMulOperation<KeyT>>(input_node, weight));
+    nn.addOp(std::make_shared<Naive_MatMulOperation<KeyT>>(input_node, weight));
 
     Tensor output = nn.infer();
 
@@ -114,4 +114,52 @@ TEST(network, SoftmaxOperation) {
     EXPECT_TRUE(fabs((output[0, 0, 0, 1]) - 0.2447) < eps);
     EXPECT_TRUE(fabs((output[0, 0, 0, 2]) - 0.6652) < eps);
     EXPECT_TRUE(fabs((output[0, 0, 1, 0]) - 0.09) < eps);
+}
+
+TEST(network, CacheFriendly_MatMulOperation) {
+    Tensor<KeyT> input(1, 1, {Matrix<KeyT>(2, 2, {1, 2, 3, 4})});
+    Tensor<KeyT> weight(1, 1, {Matrix<KeyT>(2, 2, {5, 6, 7, 8})});
+
+    auto input_node = std::make_shared<InputData<KeyT>>(input);
+    network::NeuralNetwork<KeyT> nn;
+    nn.addOp(std::make_shared<CacheFriendly_MatMulOperation<KeyT>>(input_node, weight));
+
+    Tensor output = nn.infer();
+
+    EXPECT_EQ((output[0, 0, 0, 0]), 19);
+    EXPECT_EQ((output[0, 0, 0, 1]), 22);
+    EXPECT_EQ((output[0, 0, 1, 0]), 43);
+    EXPECT_EQ((output[0, 0, 1, 1]), 50);
+}
+
+TEST(network, CacheFriendly_Tiling_MatMulOperation) {
+    Tensor<KeyT> input(1, 1, {Matrix<KeyT>(2, 2, {1, 2, 3, 4})});
+    Tensor<KeyT> weight(1, 1, {Matrix<KeyT>(2, 2, {5, 6, 7, 8})});
+
+    auto input_node = std::make_shared<InputData<KeyT>>(input);
+    network::NeuralNetwork<KeyT> nn;
+    nn.addOp(std::make_shared<CacheFriendly_Tiling_MatMulOperation<KeyT>>(input_node, weight));
+
+    Tensor output = nn.infer();
+
+    EXPECT_EQ((output[0, 0, 0, 0]), 19);
+    EXPECT_EQ((output[0, 0, 0, 1]), 22);
+    EXPECT_EQ((output[0, 0, 1, 0]), 43);
+    EXPECT_EQ((output[0, 0, 1, 1]), 50);
+}
+
+TEST(network, Optimized_MatMulOperation) {
+    Tensor<KeyT> input(1, 1, {Matrix<KeyT>(2, 2, {1, 2, 3, 4})});
+    Tensor<KeyT> weight(1, 1, {Matrix<KeyT>(2, 2, {5, 6, 7, 8})});
+
+    auto input_node = std::make_shared<InputData<KeyT>>(input);
+    network::NeuralNetwork<KeyT> nn;
+    nn.addOp(std::make_shared<Optimized_MatMulOperation<KeyT>>(input_node, weight));
+
+    Tensor output = nn.infer();
+
+    EXPECT_EQ((output[0, 0, 0, 0]), 19);
+    EXPECT_EQ((output[0, 0, 0, 1]), 22);
+    EXPECT_EQ((output[0, 0, 1, 0]), 43);
+    EXPECT_EQ((output[0, 0, 1, 1]), 50);
 }

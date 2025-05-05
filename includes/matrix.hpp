@@ -92,6 +92,16 @@ class Matrix final : private std::vector<T> {
     using std::vector<value_type>::crend;
 
     bool equal(const Matrix& other) const { return data() == other.data(); }
+
+    void transpose() {
+        Matrix transposed(cols_, rows_);
+        for (std::size_t i = 0; i < rows_; ++i) {
+            for (std::size_t j = 0; j < cols_; ++j) {
+                transposed[j, i] = (*this)[i, j];
+            }
+        }
+        std::swap(*this, transposed);
+    }
 };
 
 template <typename T>
@@ -119,7 +129,7 @@ Matrix<T> operator*(Matrix<T>& A, Matrix<T>& rhs) {
 }
 
 template <typename T>
-Matrix<T> operator*(const Matrix<T>& A,const  Matrix<T>& rhs) {
+Matrix<T> operator*(const Matrix<T>& A, const Matrix<T>& rhs) {
     const std::size_t rhs_cols = rhs.n_cols();
     const std::size_t rhs_rows = rhs.n_rows();
     const std::size_t cols = A.n_cols();

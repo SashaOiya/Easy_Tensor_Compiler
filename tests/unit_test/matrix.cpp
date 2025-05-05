@@ -66,3 +66,15 @@ TEST(matrix_buffer, multiply) {
     EXPECT_EQ((mul[1, 0]), 68);
     EXPECT_EQ((mul[1, 1]), 47);
 }
+
+TEST(matrix_buffer, transpose) {
+    Matrix<double> matrix = {2, 3, {1, 2, 3, 4, 5, 6}};
+    matrix.transpose();
+
+    EXPECT_EQ((matrix[0, 0]), 1);
+    EXPECT_EQ((matrix[0, 1]), 4);
+    EXPECT_EQ((matrix[1, 0]), 2);
+    EXPECT_EQ((matrix[1, 1]), 5);
+    EXPECT_EQ((matrix[2, 0]), 3);
+    EXPECT_EQ((matrix[2, 1]), 6);
+}

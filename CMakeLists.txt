@@ -14,8 +14,9 @@ enable_testing()
 
 add_executable(etc src/main.cpp)
 target_compile_features(etc PUBLIC cxx_std_23)
+target_compile_options(etc PRIVATE -mavx)
 target_include_directories(etc PRIVATE ${CMAKE_SOURCE_DIR}/includes)
 
 add_subdirectory(tests/unit_test)
 #add_subdirectory(tests/e2e_tests)
-#add_subdirectory(benchmark)
+add_subdirectory(benchmark)

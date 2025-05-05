@@ -3,6 +3,7 @@
 #include <memory>
 #include "tensor.hpp"
 #include "detail.hpp"
+#include "operations.hpp"
 
 namespace network {
 
